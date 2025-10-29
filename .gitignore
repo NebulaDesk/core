@@ -1,0 +1,16 @@
+# dependencies / tooling
+node_modules/
+dist/
+build/
+.env
+*.log
+
+# OS & editor junk
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# temporary
+*.local.json
+*.cache
