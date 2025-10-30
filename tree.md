@@ -5,14 +5,6 @@
 ├─ icons/
 │  ├─ icon-192.png
 │  └─ icon-512.png
-│
-├─ widgets/
-│  ├─ notes.json
-│  ├─ currency-converter.json
-│  └─ checklist.json
-│
-
-
 
 ```
 
@@ -23,7 +15,12 @@ core/
 ├─ storage.js
 ├─ sw.js
 ├─ manifest.webmanifest
-
+│
+├─ widgets/
+│  ├─ notes.json
+│  ├─ currency-converter.json
+│  └─ checklist.json
+│
 ├─ docs/
 │  ├─ GETTING_STARTED.md
 │  ├─ WIDGETS.md
