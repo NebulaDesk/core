@@ -1,0 +1,41 @@
+{
+  "id": "checklist",
+  "name": "Checklist",
+  "version": "1.0.0",
+  "category": "Productivity",
+  "description": "A simple local checklist widget that works offline.",
+  "permissions": ["storage"],
+  "ui": {
+    "layout": [
+      { "component": "input", "id": "newItem", "label": "Add new item", "placeholder": "e.g. Buy Lira or update travel notes" },
+      {
+        "component": "buttons",
+        "items": [
+          { "id": "add", "label": "Add", "variant": "primary" },
+          { "id": "clear", "label": "Clear all", "variant": "ghost" }
+        ]
+      },
+      { "component": "list", "id": "items", "label": "Your checklist", "items": [] },
+      { "component": "status", "id": "listStatus", "text": "No items yet" }
+    ]
+  },
+  "logic": [
+    {
+      "when": "add",
+      "do": "let list = storage.get('checklist') || []; list.push({text: state.newItem, done: false}); storage.set('checklist', list); ui.set('items', list); state.newItem=''; ui.set('listStatus', list.length+' items');"
+    },
+    {
+      "when": "clear",
+      "do": "storage.set('checklist', []); ui.set('items', []); ui.set('listStatus','Cleared');"
+    },
+    {
+      "when": "load",
+      "do": "let list = storage.get('checklist') || []; ui.set('items', list); ui.set('listStatus', list.length+' items');"
+    }
+  ],
+  "meta": {
+    "author": "NebulaDesk Core Team",
+    "license": "MIT",
+    "updated": "2025-10-30"
+  }
+}
