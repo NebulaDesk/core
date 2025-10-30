@@ -1,0 +1,131 @@
+name: Widget proposal
+about: Propose a new NebulaDesk widget (declarative JSON + optional logic)
+title: "[Widget]: "
+labels: ["widget"]
+assignees: ""
+type: enhancement
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🧩 Widget Proposal
+        Thanks for proposing a widget for NebulaDesk! Please provide enough detail for us to evaluate security, UX, and feasibility.
+
+  - type: input
+    id: widget_name
+    attributes:
+      label: Widget name
+      placeholder: "Example: Currency Converter"
+    validations:
+      required: true
+
+  - type: textarea
+    id: purpose
+    attributes:
+      label: Purpose / user story
+      description: "What problem does this widget solve? Who is it for?"
+      placeholder: |
+        As a traveler, I want to convert TRY↔EUR quickly so that I can decide whether to pay cash or card.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: "Pick the closest category"
+      options:
+        - Finance
+        - Travel
+        - Productivity
+        - Utilities
+        - Health
+        - Education
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: permissions
+    attributes:
+      label: Requested permissions
+      description: "Minimum needed to function (least-privilege)"
+      options:
+        - label: Storage (read/write local state)
+        - label: Network (fetch data from the web)
+        - label: Crypto (local encrypt/decrypt helpers)
+    validations:
+      required: false
+
+  - type: textarea
+    id: data_sources
+    attributes:
+      label: Data sources (if any)
+      description: "List APIs or endpoints (only if Network is needed). Prefer public/anonymous APIs."
+      placeholder: |
+        Example: https://api.exchangerate.host/latest (GET)
+    validations:
+      required: false
+
+  - type: textarea
+    id: ui_layout
+    attributes:
+      label: Draft UI layout (JSON)
+      description: "Declarative widget UI (fields, controls)."
+      placeholder: |
+        {
+          "ui": {
+            "layout": [
+              { "component": "number", "id": "amount", "label": "Amount" },
+              { "component": "select", "id": "from", "label": "From", "options": ["TRY","EUR"] },
+              { "component": "select", "id": "to", "label": "To", "options": ["TRY","EUR"] }
+            ]
+          }
+        }
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: logic
+    attributes:
+      label: Logic (pseudo or minimal code)
+      description: "Use simple expressions; no DOM access. Example: onChange rules."
+      placeholder: |
+        onChange:
+          - when: "amount"
+            do: "state.result = round(state.amount * state.rate, 2)"
+    validations:
+      required: false
+
+  - type: textarea
+    id: security
+    attributes:
+      label: Security considerations
+      description: "Any privacy/security concerns? Why are requested permissions necessary?"
+      placeholder: "Example: Needs Network only to fetch public FX rates; no PII; caching to local storage."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: "What does ‘done’ look like? Define testable outcomes."
+      placeholder: |
+        - Converts between TRY and EUR accurately to 2dp
+        - Works offline with last-known rate
+        - No errors in console; passes CSP
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have searched existing issues to avoid duplicates.
+          required: true
+        - label: I agree to license my contribution under the project’s license.
+          required: true
