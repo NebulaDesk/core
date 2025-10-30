@@ -1,4 +1,5 @@
-const CACHE = 'dashboard-v3';
+const VERSION = '4';
+const CACHE = `dashboard-v${VERSION}`;
 const ASSETS = [
   'index.html',
   'manifest.webmanifest',
@@ -8,11 +9,10 @@ const ASSETS = [
 self.addEventListener('install', (e) => {
   e.waitUntil((async () => {
     const cache = await caches.open(CACHE);
-    // Use individual adds so one 404 doesn’t kill the whole install
-    await Promise.all(
-      ASSETS.map(u => cache.add(new Request(u, { cache: 'reload' })))
-    );
-    self.skipWaiting();
+    await Promise.all(ASSETS.map(u =>
+      cache.add(new Request(u, { cache: 'reload' }))
+    ));
+    self.skipWaiting(); // activate immediately
   })());
 });
 
@@ -20,20 +20,46 @@ self.addEventListener('activate', (e) => {
   e.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)));
-    await self.clients.claim();
+    await self.clients.claim(); // control open pages
   })());
 });
 
 self.addEventListener('fetch', (e) => {
-  const { request } = e;
-  if (request.method === 'GET' && new URL(request.url).origin === location.origin) {
+  const req = e.request;
+  const url = new URL(req.url);
+
+  // Only same-origin GET
+  if (req.method !== 'GET' || url.origin !== location.origin) return;
+
+  // Network-first for index.html to get latest shell on each visit
+  const isIndex = url.pathname.endsWith('/') || url.pathname.endsWith('index.html');
+  if (isIndex) {
     e.respondWith((async () => {
-      const cached = await caches.match(request);
-      if (cached) return cached;
-      const fresh = await fetch(request);
-      const cache = await caches.open(CACHE);
-      cache.put(request, fresh.clone());
-      return fresh;
+      try {
+        const fresh = await fetch(new Request('index.html', { cache: 'reload' }));
+        const cache = await caches.open(CACHE);
+        cache.put('index.html', fresh.clone());
+        return fresh;
+      } catch {
+        const cached = await caches.match('index.html');
+        return cached || new Response('Offline', { status: 503 });
+      }
     })());
+    return;
   }
+
+  // Cache-first for other same-origin GETs
+  e.respondWith((async () => {
+    const cached = await caches.match(req);
+    if (cached) return cached;
+    const fresh = await fetch(req);
+    const cache = await caches.open(CACHE);
+    cache.put(req, fresh.clone());
+    return fresh;
+  })());
+});
+
+// Optional: allow page to tell SW to skip waiting
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
