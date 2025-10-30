@@ -96,9 +96,24 @@
   </main>
 
   <script type="module">
-    // --- PWA install & SW registration (relative paths for GitHub Pages compatibility) ---
+    // --- PWA install & SW registration ---
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        reg.update();
+        function promptRefresh(worker){ worker.postMessage('SKIP_WAITING'); }
+        if (reg.waiting) { promptRefresh(reg.waiting); }
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          newSW?.addEventListener('statechange', () => {
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              promptRefresh(newSW);
+            }
+          });
+        });
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          window.location.reload();
+        });
+      });
     }
 
     let deferredPrompt;
@@ -158,7 +173,6 @@
     $('unlockNotes').addEventListener('click', loadNotes);
     passEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter') loadNotes(); });
 
-    // Global lock just clears UI (keeps encrypted data in IndexedDB)
     $('lockBtn').addEventListener('click', ()=>{
       passEl.value = '';
       notesEl.value = '';
@@ -166,10 +180,9 @@
       statusEl.className = 'muted';
     });
 
-    // Initial state — try to show if unencrypted exists
     loadNotes();
 
-    // --- π Estimator (Monte Carlo) with Web Worker ---
+    // --- π Estimator (Monte Carlo) ---
     const piStart   = $('piStart');
     const piCancel  = $('piCancel');
     const piCopy    = $('piCopy');
@@ -179,15 +192,12 @@
     const piStatus  = $('piStatus');
     const samplesEl = $('samples');
 
-    // Create a worker from a Blob URL to keep everything in one file
     const workerSrc = `
       self.onmessage = async (e) => {
         const { total, batch } = e.data;
         let inside = 0, done = 0;
         const step = batch || 5000;
-
         function rnd(){ return Math.random(); }
-
         while (done < total) {
           const n = Math.min(step, total - done);
           for (let i=0;i<n;i++){
@@ -197,7 +207,6 @@
           done += n;
           const est = 4 * (inside / done);
           self.postMessage({ type:'progress', done, total, est });
-          // Yield to avoid blocking the worker event loop
           await new Promise(r=>setTimeout(r,0));
         }
         self.postMessage({ type:'done', est: 4 * (inside / total) });
@@ -217,7 +226,6 @@
 
     function formatPi(x){
       if (!Number.isFinite(x)) return '—';
-      // show up to 12 decimals
       return x.toFixed(12);
     }
 
@@ -251,7 +259,6 @@
           piWorker = null;
         }
       };
-
       piWorker.postMessage({ total, batch });
     }
 
@@ -279,8 +286,6 @@
     piStart.addEventListener('click', startPi);
     piCancel.addEventListener('click', cancelPi);
     piCopy.addEventListener('click', copyPi);
-
-    // Clean up worker on page unload
     window.addEventListener('beforeunload', ()=>{ if(piWorker) piWorker.terminate(); });
   </script>
 </body>
