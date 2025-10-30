@@ -3,25 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>My Local Dashboard</title>
-  <link rel="manifest" href="./manifest.webmanifest">
+  <title>NebulaDesk — Local Dashboard (Encrypted Notes)</title>
+  <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#0f172a" />
   <style>
-    :root{--bg:#0f172a;--fg:#e5e7eb;--muted:#9ca3af;--card:#111827;--accent:#22d3ee}
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font:16px system-ui,Segoe UI,Roboto,Inter}
-    header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid #1f2937;background:#0b1220;position:sticky;top:0}
-    h1{font-size:18px;margin:0} .btn{border:1px solid #1f2937;background:#0b1220;padding:10px 12px;border-radius:10px;color:var(--fg);cursor:pointer}
-    main{max-width:960px;margin:0 auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
-    .card{background:var(--card);border:1px solid #1f2937;border-radius:16px;padding:16px}
+    :root{
+      --bg:#0f172a; --fg:#e5e7eb; --muted:#9ca3af; --card:#111827; --accent:#22d3ee; --border:#1f2937;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border);background:#0b1220;position:sticky;top:0;z-index:10}
+    h1{margin:0;font-size:18px}
+    .btn{border:1px solid var(--border);background:#0b1220;color:var(--fg);padding:10px 12px;border-radius:10px;cursor:pointer}
+    .btn:hover{transform:translateY(-1px)}
+    main{max-width:960px;margin:0 auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
     .row{display:flex;gap:8px;align-items:center;margin:6px 0}
-    input,select{width:100%;padding:10px;border-radius:10px;border:1px solid #1f2937;background:#0b1220;color:var(--fg)}
+    input,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:#0b1220;color:var(--fg)}
     .muted{color:var(--muted);font-size:12px}
-    .ok{color:#34d399}.warn{color:#fbbf24}.err{color:#f87171}
+    .ok{color:#34d399}.err{color:#f87171}
   </style>
 </head>
 <body>
   <header>
-    <h1>My Local Dashboard</h1>
+    <h1>NebulaDesk — Local Dashboard</h1>
     <div>
       <button id="installBtn" class="btn" hidden>Install App</button>
       <button id="lockBtn" class="btn">Lock</button>
@@ -29,60 +35,73 @@
   </header>
 
   <main>
-    <!-- Example widget: quick notes (encrypted) -->
+    <!-- Encrypted Notes -->
     <section class="card">
       <h3 style="margin-top:0">Encrypted Notes</h3>
       <div class="row">
-        <input id="passphrase" type="password" placeholder="Passphrase (to unlock)" />
+        <input id="passphrase" type="password" placeholder="Passphrase (required to unlock encrypted notes)" />
       </div>
       <div class="row">
-        <textarea id="notes" rows="8" placeholder="Type notes here…" style="width:100%;resize:vertical;padding:10px;border-radius:10px;border:1px solid #1f2937;background:#0b1220;color:var(--fg)"></textarea>
+        <textarea id="notes" rows="8" placeholder="Type your notes here…"></textarea>
       </div>
       <div class="row">
         <button id="saveNotes" class="btn">Save</button>
+        <button id="unlockNotes" class="btn">Unlock</button>
         <span id="notesStatus" class="muted"></span>
       </div>
-      <p class="muted">Data is stored locally in your browser (IndexedDB). If you forget the passphrase, the data can’t be recovered.</p>
+      <p class="muted">Notes are stored locally in your browser (IndexedDB). If you set a passphrase, they’re encrypted (AES-GCM via Web Crypto). If you forget the passphrase, the data can’t be recovered.</p>
     </section>
 
-    <!-- Slot for mini tools you add later (like the TRY↔EUR converter) -->
+    <!-- Placeholder for future widgets -->
     <section class="card">
-      <h3 style="margin-top:0">Add Your Widgets</h3>
-      <p class="muted">Drop self‑contained HTML widgets here (cards, calculators, checklists). Everything works offline after first load.</p>
+      <h3 style="margin-top:0">Your Widgets</h3>
+      <p class="muted">Add more tools here (e.g., currency converter). Everything works offline after first load.</p>
     </section>
   </main>
 
   <script type="module">
-    // Register service worker (required for PWA + offline cache). Works on HTTPS origins or http://localhost.
+    // --- PWA install & SW registration (relative paths for GitHub Pages compatibility) ---
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
     }
 
-    // Handle install prompt for PWA
     let deferredPrompt;
     const installBtn = document.getElementById('installBtn');
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
-      deferredPrompt = e; installBtn.hidden = false;
+      deferredPrompt = e;
+      installBtn.hidden = false;
     });
     installBtn?.addEventListener('click', async () => {
-      installBtn.hidden = true; await deferredPrompt?.prompt();
+      installBtn.hidden = true;
+      await deferredPrompt?.prompt();
       deferredPrompt = null;
     });
 
-    // Minimal encrypted notes using storage.js (IndexedDB + WebCrypto)
+    // --- Encrypted Notes logic using storage.js ---
     import { storage } from './storage.js';
     const $ = (id)=>document.getElementById(id);
-    const passEl = $('passphrase');
-    const notesEl = $('notes');
+
+    const passEl   = $('passphrase');
+    const notesEl  = $('notes');
     const statusEl = $('notesStatus');
 
     async function loadNotes(){
+      const pass = passEl.value || '';
       try{
-        const pass = passEl.value || '';
         const data = await storage.get('notes', pass);
         notesEl.value = data || '';
-        statusEl.textContent = data ? 'Loaded' : 'No saved notes yet';
+        if (data && pass) {
+          statusEl.textContent = 'Unlocked';
+          statusEl.className = 'muted ok';
+        } else if (!data && pass) {
+          statusEl.textContent = 'No saved notes for this passphrase';
+          statusEl.className = 'muted';
+        } else if (!pass) {
+          // If previously saved unencrypted, this will load; if encrypted, it will show empty
+          statusEl.textContent = data ? 'Loaded (unencrypted)' : 'No saved notes yet';
+          statusEl.className = 'muted';
+        }
       }catch(err){
         statusEl.textContent = 'Wrong passphrase or corrupt data';
         statusEl.className = 'muted err';
@@ -93,15 +112,26 @@
       const pass = passEl.value || '';
       try{
         await storage.set('notes', notesEl.value, pass);
-        statusEl.textContent = 'Saved'; statusEl.className = 'muted ok';
-      }catch(err){ statusEl.textContent = 'Save failed'; statusEl.className = 'muted err'; }
+        statusEl.textContent = pass ? 'Saved (encrypted)' : 'Saved (unencrypted)';
+        statusEl.className = 'muted ok';
+      }catch{
+        statusEl.textContent = 'Save failed';
+        statusEl.className = 'muted err';
+      }
     });
 
+    $('unlockNotes').addEventListener('click', loadNotes);
+    passEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter') loadNotes(); });
+
+    // Global lock just clears UI (keeps encrypted data in IndexedDB)
     $('lockBtn').addEventListener('click', ()=>{
-      passEl.value = ''; notesEl.value = ''; statusEl.textContent = 'Locked';
+      passEl.value = '';
+      notesEl.value = '';
+      statusEl.textContent = 'Locked';
+      statusEl.className = 'muted';
     });
 
-    // Attempt to load on first open (will show error until passphrase provided if encrypted previously)
+    // Initial state after first load/reload — try to show if unencrypted exists
     loadNotes();
   </script>
 </body>
