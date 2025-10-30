@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NebulaDesk — Local Dashboard (Encrypted Notes)</title>
+  <title>NebulaDesk — Local Dashboard (Notes + π Estimator)</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#0f172a" />
   <style>
@@ -12,17 +12,22 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif}
+    body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
     header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border);background:#0b1220;position:sticky;top:0;z-index:10}
     h1{margin:0;font-size:18px}
     .btn{border:1px solid var(--border);background:#0b1220;color:var(--fg);padding:10px 12px;border-radius:10px;cursor:pointer}
     .btn:hover{transform:translateY(-1px)}
-    main{max-width:960px;margin:0 auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+    main{max-width:1000px;margin:0 auto;padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
     .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
-    .row{display:flex;gap:8px;align-items:center;margin:6px 0}
-    input,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:#0b1220;color:var(--fg)}
+    .row{display:flex;gap:8px;align-items:center;margin:6px 0;flex-wrap:wrap}
+    input,textarea,select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:#0b1220;color:var(--fg)}
     .muted{color:var(--muted);font-size:12px}
-    .ok{color:#34d399}.err{color:#f87171}
+    .ok{color:#34d399}.err{color:#f87171}.warn{color:#fbbf24}
+    progress{width:100%;height:10px;border:1px solid var(--border);border-radius:999px;overflow:hidden;background:#0b1220}
+    progress::-webkit-progress-bar{background:#0b1220}
+    progress::-webkit-progress-value{background:var(--accent)}
+    code.kv{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; background:#0b1220; padding:2px 6px; border-radius:6px; border:1px solid var(--border)}
+    .small{font-size:13px}
   </style>
 </head>
 <body>
@@ -49,10 +54,41 @@
         <button id="unlockNotes" class="btn">Unlock</button>
         <span id="notesStatus" class="muted"></span>
       </div>
-      <p class="muted">Notes are stored locally in your browser (IndexedDB). If you set a passphrase, they’re encrypted (AES-GCM via Web Crypto). If you forget the passphrase, the data can’t be recovered.</p>
+      <p class="muted">Notes are stored locally (IndexedDB). If you set a passphrase, they’re encrypted (AES-GCM via Web Crypto). If you forget the passphrase, the data can’t be recovered.</p>
     </section>
 
-    <!-- Placeholder for future widgets -->
+    <!-- π Estimator (Monte Carlo) -->
+    <section class="card">
+      <h3 style="margin-top:0">π Estimator (Monte Carlo)</h3>
+      <p class="muted small">Generates random points in a unit square and estimates π by 4·(points inside quarter-circle / total). Runs offline.</p>
+      <div class="row">
+        <label class="small" for="samples">Samples</label>
+        <select id="samples">
+          <option value="10000">10,000</option>
+          <option value="50000">50,000</option>
+          <option value="100000" selected>100,000</option>
+          <option value="500000">500,000</option>
+          <option value="1000000">1,000,000</option>
+        </select>
+      </div>
+      <div class="row">
+        <button id="piStart" class="btn">Start</button>
+        <button id="piCancel" class="btn">Cancel</button>
+        <button id="piCopy" class="btn">Copy</button>
+      </div>
+      <div class="row">
+        <progress id="piProgress" value="0" max="1"></progress>
+      </div>
+      <div class="row">
+        <div class="small">π ≈ <code id="piValue" class="kv">—</code></div>
+        <div class="small">Error vs Math.PI: <code id="piError" class="kv">—</code></div>
+      </div>
+      <div class="row">
+        <span id="piStatus" class="muted"></span>
+      </div>
+    </section>
+
+    <!-- Placeholder for other widgets -->
     <section class="card">
       <h3 style="margin-top:0">Your Widgets</h3>
       <p class="muted">Add more tools here (e.g., currency converter). Everything works offline after first load.</p>
@@ -78,7 +114,7 @@
       deferredPrompt = null;
     });
 
-    // --- Encrypted Notes logic using storage.js ---
+    // --- Encrypted Notes using storage.js ---
     import { storage } from './storage.js';
     const $ = (id)=>document.getElementById(id);
 
@@ -98,7 +134,6 @@
           statusEl.textContent = 'No saved notes for this passphrase';
           statusEl.className = 'muted';
         } else if (!pass) {
-          // If previously saved unencrypted, this will load; if encrypted, it will show empty
           statusEl.textContent = data ? 'Loaded (unencrypted)' : 'No saved notes yet';
           statusEl.className = 'muted';
         }
@@ -131,8 +166,122 @@
       statusEl.className = 'muted';
     });
 
-    // Initial state after first load/reload — try to show if unencrypted exists
+    // Initial state — try to show if unencrypted exists
     loadNotes();
+
+    // --- π Estimator (Monte Carlo) with Web Worker ---
+    const piStart   = $('piStart');
+    const piCancel  = $('piCancel');
+    const piCopy    = $('piCopy');
+    const piProgress= $('piProgress');
+    const piValue   = $('piValue');
+    const piError   = $('piError');
+    const piStatus  = $('piStatus');
+    const samplesEl = $('samples');
+
+    // Create a worker from a Blob URL to keep everything in one file
+    const workerSrc = `
+      self.onmessage = async (e) => {
+        const { total, batch } = e.data;
+        let inside = 0, done = 0;
+        const step = batch || 5000;
+
+        function rnd(){ return Math.random(); }
+
+        while (done < total) {
+          const n = Math.min(step, total - done);
+          for (let i=0;i<n;i++){
+            const x = rnd(), y = rnd();
+            if (x*x + y*y <= 1) inside++;
+          }
+          done += n;
+          const est = 4 * (inside / done);
+          self.postMessage({ type:'progress', done, total, est });
+          // Yield to avoid blocking the worker event loop
+          await new Promise(r=>setTimeout(r,0));
+        }
+        self.postMessage({ type:'done', est: 4 * (inside / total) });
+      };
+    `;
+    const workerUrl = URL.createObjectURL(new Blob([workerSrc], {type:'text/javascript'}));
+    let piWorker = null;
+
+    function resetPiUI(){
+      piProgress.value = 0;
+      piValue.textContent = '—';
+      piError.textContent = '—';
+      piStatus.textContent = '';
+      piStatus.className = 'muted';
+    }
+    resetPiUI();
+
+    function formatPi(x){
+      if (!Number.isFinite(x)) return '—';
+      // show up to 12 decimals
+      return x.toFixed(12);
+    }
+
+    function startPi(){
+      if (piWorker) { piWorker.terminate(); piWorker = null; }
+      resetPiUI();
+      const total = parseInt(samplesEl.value, 10) || 100000;
+      const batch = 10000;
+
+      piWorker = new Worker(workerUrl);
+      piStatus.textContent = 'Running…';
+      piStatus.className = 'muted';
+
+      piWorker.onmessage = (e)=>{
+        const { type } = e.data;
+        if (type === 'progress'){
+          const { done, total, est } = e.data;
+          piProgress.max = total;
+          piProgress.value = done;
+          piValue.textContent = formatPi(est);
+          const err = Math.abs(est - Math.PI);
+          piError.textContent = err.toExponential(3);
+        } else if (type === 'done'){
+          const est = e.data.est;
+          piValue.textContent = formatPi(est);
+          const err = Math.abs(est - Math.PI);
+          piError.textContent = err.toExponential(3);
+          piStatus.textContent = 'Complete';
+          piStatus.className = 'muted ok';
+          piWorker.terminate();
+          piWorker = null;
+        }
+      };
+
+      piWorker.postMessage({ total, batch });
+    }
+
+    function cancelPi(){
+      if (piWorker){
+        piWorker.terminate();
+        piWorker = null;
+        piStatus.textContent = 'Cancelled';
+        piStatus.className = 'muted warn';
+      }
+    }
+
+    function copyPi(){
+      const txt = piValue.textContent || '';
+      if (!txt || txt === '—') { piStatus.textContent = 'Nothing to copy'; piStatus.className='muted'; return; }
+      navigator.clipboard?.writeText(txt).then(()=>{
+        piStatus.textContent = 'Copied to clipboard';
+        piStatus.className = 'muted ok';
+      }).catch(()=>{
+        piStatus.textContent = 'Copy failed';
+        piStatus.className = 'muted err';
+      });
+    }
+
+    piStart.addEventListener('click', startPi);
+    piCancel.addEventListener('click', cancelPi);
+    piCopy.addEventListener('click', copyPi);
+
+    // Clean up worker on page unload
+    window.addEventListener('beforeunload', ()=>{ if(piWorker) piWorker.terminate(); });
   </script>
 </body>
 </html>
