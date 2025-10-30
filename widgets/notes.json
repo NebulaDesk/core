@@ -1,0 +1,42 @@
+{
+  "id": "notes",
+  "name": "Encrypted Notes",
+  "version": "1.0.0",
+  "category": "Productivity",
+  "description": "A simple local-first notes widget with optional AES-GCM encryption.",
+  "permissions": ["storage", "crypto"],
+  "ui": {
+    "layout": [
+      { "component": "password", "id": "passphrase", "label": "Passphrase", "placeholder": "Enter passphrase to unlock" },
+      { "component": "textarea", "id": "notes", "label": "Notes", "rows": 8, "placeholder": "Write your notes..." },
+      {
+        "component": "buttons",
+        "items": [
+          { "id": "save", "label": "Save", "variant": "primary" },
+          { "id": "unlock", "label": "Unlock", "variant": "secondary" },
+          { "id": "lock", "label": "Lock", "variant": "ghost" }
+        ]
+      },
+      { "component": "status", "id": "notesStatus", "text": "Locked" }
+    ]
+  },
+  "logic": [
+    {
+      "when": "save",
+      "do": "storage.set('notes', state.notes, state.passphrase)"
+    },
+    {
+      "when": "unlock",
+      "do": "state.notes = storage.get('notes', state.passphrase)"
+    },
+    {
+      "when": "lock",
+      "do": "state.passphrase = ''; state.notes = ''; ui.set('notesStatus', 'Locked')"
+    }
+  ],
+  "meta": {
+    "author": "NebulaDesk Core Team",
+    "license": "MIT",
+    "updated": "2025-10-30"
+  }
+}
