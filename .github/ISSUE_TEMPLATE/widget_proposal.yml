@@ -1,16 +1,14 @@
 name: Widget proposal
-about: Propose a new NebulaDesk widget (declarative JSON + optional logic)
+description: Propose a new NebulaDesk widget (declarative JSON + optional logic)
 title: "[Widget]: "
 labels: ["widget"]
-assignees: ""
-type: enhancement
 
 body:
   - type: markdown
     attributes:
       value: |
         ## 🧩 Widget Proposal
-        Thanks for proposing a widget for NebulaDesk! Please provide enough detail for us to evaluate security, UX, and feasibility.
+        Provide enough detail for us to evaluate security, UX, and feasibility.
 
   - type: input
     id: widget_name
@@ -26,7 +24,7 @@ body:
       label: Purpose / user story
       description: "What problem does this widget solve? Who is it for?"
       placeholder: |
-        As a traveler, I want to convert TRY↔EUR quickly so that I can decide whether to pay cash or card.
+        As a traveler, I want to convert TRY↔EUR quickly to decide whether to pay cash or card.
     validations:
       required: true
 
@@ -34,7 +32,6 @@ body:
     id: category
     attributes:
       label: Category
-      description: "Pick the closest category"
       options:
         - Finance
         - Travel
@@ -49,30 +46,25 @@ body:
   - type: checkboxes
     id: permissions
     attributes:
-      label: Requested permissions
-      description: "Minimum needed to function (least-privilege)"
+      label: Requested permissions (least-privilege)
       options:
         - label: Storage (read/write local state)
-        - label: Network (fetch data from the web)
+        - label: Network (fetch public data from the web)
         - label: Crypto (local encrypt/decrypt helpers)
-    validations:
-      required: false
 
   - type: textarea
     id: data_sources
     attributes:
       label: Data sources (if any)
-      description: "List APIs or endpoints (only if Network is needed). Prefer public/anonymous APIs."
+      description: "List APIs or endpoints if Network is needed."
       placeholder: |
         Example: https://api.exchangerate.host/latest (GET)
-    validations:
-      required: false
 
   - type: textarea
     id: ui_layout
     attributes:
       label: Draft UI layout (JSON)
-      description: "Declarative widget UI (fields, controls)."
+      description: "Declarative UI (fields, controls)."
       placeholder: |
         {
           "ui": {
@@ -84,8 +76,6 @@ body:
           }
         }
       render: json
-    validations:
-      required: false
 
   - type: textarea
     id: logic
@@ -96,14 +86,12 @@ body:
         onChange:
           - when: "amount"
             do: "state.result = round(state.amount * state.rate, 2)"
-    validations:
-      required: false
 
   - type: textarea
     id: security
     attributes:
       label: Security considerations
-      description: "Any privacy/security concerns? Why are requested permissions necessary?"
+      description: "Why are requested permissions necessary? Any privacy concerns?"
       placeholder: "Example: Needs Network only to fetch public FX rates; no PII; caching to local storage."
     validations:
       required: true
@@ -112,11 +100,11 @@ body:
     id: acceptance
     attributes:
       label: Acceptance criteria
-      description: "What does ‘done’ look like? Define testable outcomes."
+      description: "Define testable outcomes."
       placeholder: |
-        - Converts between TRY and EUR accurately to 2dp
+        - Converts between TRY and EUR to 2dp
         - Works offline with last-known rate
-        - No errors in console; passes CSP
+        - No console errors; passes CSP
     validations:
       required: true
 
@@ -125,7 +113,7 @@ body:
     attributes:
       label: Confirmation
       options:
-        - label: I have searched existing issues to avoid duplicates.
+        - label: I searched existing issues to avoid duplicates.
           required: true
         - label: I agree to license my contribution under the project’s license.
           required: true
