@@ -1,0 +1,56 @@
+{
+  "id": "currency-converter",
+  "name": "Currency Converter",
+  "version": "1.0.0",
+  "category": "Finance",
+  "description": "Convert between TRY, EUR, ZAR and USD using cached or live rates. Works offline with last-known values.",
+  "permissions": ["storage", "network"],
+  "ui": {
+    "layout": [
+      { "component": "number", "id": "amount", "label": "Amount", "placeholder": "Enter amount" },
+      {
+        "component": "select",
+        "id": "from",
+        "label": "From",
+        "options": ["TRY", "EUR", "USD", "ZAR"],
+        "value": "TRY"
+      },
+      {
+        "component": "select",
+        "id": "to",
+        "label": "To",
+        "options": ["EUR", "USD", "ZAR", "TRY"],
+        "value": "EUR"
+      },
+      {
+        "component": "buttons",
+        "items": [
+          { "id": "convert", "label": "Convert", "variant": "primary" },
+          { "id": "swap", "label": "Swap", "variant": "secondary" },
+          { "id": "refresh", "label": "Update Rates", "variant": "ghost" }
+        ]
+      },
+      { "component": "output", "id": "result", "label": "Converted amount", "text": "—" },
+      { "component": "status", "id": "fxStatus", "text": "Rates not loaded" }
+    ]
+  },
+  "logic": [
+    {
+      "when": "refresh",
+      "do": "network.fetch('https://api.exchangerate.host/latest?base=' + state.from).then(r => storage.set('rates', r.rates))"
+    },
+    {
+      "when": "convert",
+      "do": "let rates = storage.get('rates') || {}; if(rates[state.to]){ state.result = (state.amount * rates[state.to]).toFixed(2); ui.set('result', state.result); ui.set('fxStatus', 'OK'); } else { ui.set('fxStatus', 'Rate not available'); }"
+    },
+    {
+      "when": "swap",
+      "do": "let tmp = state.from; state.from = state.to; state.to = tmp; ui.refresh();"
+    }
+  ],
+  "meta": {
+    "author": "NebulaDesk Core Team",
+    "license": "MIT",
+    "updated": "2025-10-30"
+  }
+}
