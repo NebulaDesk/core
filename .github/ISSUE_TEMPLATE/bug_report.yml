@@ -1,24 +1,21 @@
 name: Bug report
-about: Report a bug or unexpected behavior in NebulaDesk Core
+description: Report a bug or unexpected behavior in NebulaDesk Core
 title: "[Bug]: "
 labels: ["bug"]
-assignees: ""
-type: bug
 
 body:
   - type: markdown
     attributes:
       value: |
         ## 🐞 Bug Report
-        Thanks for taking the time to help improve NebulaDesk Core!  
-        Please fill out the details below so we can reproduce and fix the issue quickly.
+        Thanks for helping improve NebulaDesk Core! Please provide details below.
 
   - type: input
     id: summary
     attributes:
       label: Brief summary
       description: "What happened in one or two sentences?"
-      placeholder: "Example: The Notes widget doesn't unlock after entering the passphrase"
+      placeholder: "Example: Notes widget doesn't unlock after entering the passphrase"
     validations:
       required: true
 
@@ -27,10 +24,10 @@ body:
     attributes:
       label: Steps to reproduce
       description: "List clear steps that trigger the bug."
-      placeholder: |
-        1. Go to ...
-        2. Click ...
-        3. See error ...
+      value: |
+        1.
+        2.
+        3.
       render: bash
     validations:
       required: true
@@ -70,14 +67,12 @@ body:
     attributes:
       label: Version or commit
       placeholder: "v0.1.0 or 7a1b2c3"
-    validations:
-      required: false
 
   - type: textarea
     id: logs
     attributes:
       label: Console errors or logs
-      description: "Paste any relevant console output or screenshots."
+      description: "Paste relevant console output or screenshots."
       render: bash
 
   - type: checkboxes
@@ -85,7 +80,7 @@ body:
     attributes:
       label: Confirmation
       options:
-        - label: I have searched existing issues before submitting this one.
+        - label: I searched existing issues before submitting.
           required: true
-        - label: I am using the latest version of NebulaDesk Core.
+        - label: I’m using the latest version.
           required: false
