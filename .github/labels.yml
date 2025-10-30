@@ -1,0 +1,23 @@
+- name: bug
+  color: d73a4a
+  description: Something isn’t working
+
+- name: enhancement
+  color: a2eeef
+  description: New feature or request
+
+- name: security
+  color: 8a2be2
+  description: Security or CSP hardening
+
+- name: widget
+  color: 0e8a16
+  description: Widget proposal or changes
+
+- name: docs
+  color: 0075ca
+  description: Documentation
+
+- name: core
+  color: 5319e7
+  description: Core runtime changes
