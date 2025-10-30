@@ -1,11 +1,7 @@
 # Temp Tree File
 
 ```
-core/
-├─ index.html
-├─ storage.js
-├─ sw.js
-├─ manifest.webmanifest
+
 ├─ icons/
 │  ├─ icon-192.png
 │  └─ icon-512.png
@@ -22,6 +18,19 @@ core/
 │  ├─ MILESTONES.md
 │  └─ PROJECT_GUIDE.md
 │
+
+
+```
+
+# DONE
+```
+core/
+├─ index.html
+├─ storage.js
+├─ sw.js
+├─ manifest.webmanifest
+
+
 ├─ .github/
 │  ├─ ISSUE_TEMPLATE/
 │  │  ├─ bug_report.md
