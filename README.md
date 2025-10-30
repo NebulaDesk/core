@@ -6,6 +6,15 @@ NebulaDesk turns your **browser into an app host** for small, private, shareable
 
 ---
 
+## 🌐 Live Demo
+
+You can try NebulaDesk Core directly in your browser here:  
+👉 **[https://nebuladesk.github.io/core/](https://nebuladesk.github.io/core/)**  
+
+It works offline after the first load and can be installed as a PWA.
+
+---
+
 ## 🌌 Vision
 
 NebulaDesk reimagines the browser as a secure, local-first runtime — not just a viewer.  
