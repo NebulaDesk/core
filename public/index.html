@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>My Local Dashboard</title>
-  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="manifest" href="./manifest.webmanifest">
   <meta name="theme-color" content="#0f172a" />
   <style>
     :root{--bg:#0f172a;--fg:#e5e7eb;--muted:#9ca3af;--card:#111827;--accent:#22d3ee}
@@ -55,7 +55,7 @@
   <script type="module">
     // Register service worker (required for PWA + offline cache). Works on HTTPS origins or http://localhost.
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js');
+      navigator.serviceWorker.register('./sw.js');
     }
 
     // Handle install prompt for PWA
