@@ -11,13 +11,7 @@
 │  ├─ currency-converter.json
 │  └─ checklist.json
 │
-├─ docs/
-│  ├─ GETTING_STARTED.md
-│  ├─ WIDGETS.md
-│  ├─ ROADMAP.md
-│  ├─ MILESTONES.md
-│  └─ PROJECT_GUIDE.md
-│
+
 
 
 ```
@@ -30,7 +24,14 @@ core/
 ├─ sw.js
 ├─ manifest.webmanifest
 
-
+├─ docs/
+│  ├─ GETTING_STARTED.md
+│  ├─ WIDGETS.md
+│  ├─ ROADMAP.md
+│  ├─ MILESTONES.md
+│  ├─ CONTRIBUTING.md
+│  └─ PROJECT_GUIDE.md
+│
 ├─ .github/
 │  ├─ ISSUE_TEMPLATE/
 │  │  ├─ bug_report.md
